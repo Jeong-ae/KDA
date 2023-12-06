@@ -27,8 +27,8 @@ class SSLTrainer(Trainer):
         # STL: mean: [0.44087802, 0.42790631, 0.38678794], std: [0.26826769, 0.26104504, 0.26866837]
         # mini-ImageNet: mean: [0.47872189, 0.44985512, 0.40134091], st: [0.27524031, 0.26572543, 0.28019405]
 
-        Ttrain = RandomAugment(N=self.config['transform']['data_augment']['N'],
-                               M=self.config['transform']['data_augment']['M'])
+        Ttrain = RandomAugment(N=self.config['transform']['data_augment']['N'], # 2
+                               M=self.config['transform']['data_augment']['M']) # 9
         Ttrain = T.Compose([Ttrain, T.ToTensor()])
         Tval = T.ToTensor()
         Tsimple = T.Compose([T.RandomHorizontalFlip(),
@@ -38,8 +38,8 @@ class SSLTrainer(Trainer):
         if self.config['transform']['preprocess']['type'] == 'zca':
             Tnorm = data.ZCATransformer(self.config['transform']['preprocess']['config'])
         elif self.config['transform']['preprocess']['type'] == 'mean-std':
-            Tnorm = data.MeanStdTransformer(mean=self.config['transform']['preprocess']['mean'],
-                                            std=self.config['transform']['preprocess']['std'])
+            Tnorm = data.MeanStdTransformer(mean=[0.49139968, 0.48215841, 0.44653091],
+                                            std=[0.24703223, 0.24348513, 0.26158784])
         else:
             raise ValueError
 
@@ -48,33 +48,36 @@ class SSLTrainer(Trainer):
     def init_dataloader(self):
         Ttrain, Tval, Tsimple, Tnorm = self.init_transform()
         print(f'Source Domains: {self.config["data"]["src_domains"]}; Target Domains: {self.config["data"]["tgt_domains"]}')
-        dset = getattr(dataloader, dataloader.supported_ssl_dsets[self.config['data']['dataset']])
+
+        dset = getattr(dataloader, dataloader.supported_ssl_dsets[self.config['data']['dataset']]) # dataset
+
         d = dset.split_data(root_dir=self.config['data']['root_dir'],
                             tgt_domains=self.config['data']['tgt_domains'],
                             src_domains=self.config['data']['src_domains'],
-                            r_val=self.config['data']['Nv'] if not self.args.omniscient else None,
-                            r_lab=self.config['data']['Nl'],
-                            r_unlab=self.config['data']['Nu'],
-                            w_unlab=self.config['data']['Wu'],
+                            r_val=self.config['data']['Nv'] if not self.args.omniscient else None, # val ratio
+                            r_lab=self.config['data']['Nl'], # labeled dataset : 250
+                            r_unlab=self.config['data']['Nu'], # unlabeled dataset : none
+                            w_unlab=self.config['data']['Wu'], 
                             rand_seed=self.args.rand_seed,
                             r_data=self.config['data']['Nd'])
 
-        xl, yl, xu, xv, yv, xt, yt = d
+        xl, yl, xu, xv, yv, xt, yt = d #(250,32,32,3), (250,), (49750,32,32,3), (10000,32,32,3), (10000,), (10000,32,32,3), (10000)
         xl, yl = data.shuffle_data([xl, yl], self.args.rand_seed+1)
         xv, yv = data.shuffle_data([xv, yv], self.args.rand_seed+2)
         xt, yt = data.shuffle_data([xt, yt], self.args.rand_seed+3)
         xu, = data.shuffle_data([xu], self.args.rand_seed+4)
 
-        K, shape = self.config['transform']['data_augment']['K'], self.config['data']['shape']
-        dtrain_lab = dset(x=xl, y=yl, Taggr=Ttrain, Tsimp=Tsimple, K=K, shape=shape)
+        K, shape = self.config['transform']['data_augment']['K'], self.config['data']['shape'] # 8, 32 
+        # 8번 반복 augmentation한다는거같음
+        dtrain_lab = dset(x=xl, y=yl, Taggr=Ttrain, Tsimp=Tsimple, K=K, shape=shape) #개별적으로 데이터셋 만들고
         dtrain_unlab = dset(x=xu, y=None, Taggr=Ttrain, Tsimp=Tsimple, K=K, shape=shape)
         dval = dset(x=xv, y=yv, Taggr=None, Tsimp=Tval, K=None, shape=shape)
         dtest = dset(x=xt, y=yt, Taggr=None, Tsimp=Tval, K=None, shape=shape)
 
-        bsl, bsu = self.config['train']['bsl'], self.config['train']['bsu']
-        loader_train = SSLDataLoader(dtrain_lab, dtrain_unlab, bsl, bsu, self.args.workers)
-        loader_val = DataLoader(dval, batch_size=(bsl+bsu)*K, shuffle=False, num_workers=self.args.workers)
-        loader_test = DataLoader(dtest, batch_size=(bsl+bsu)*K, shuffle=False, num_workers=self.args.workers)
+        bsl, bsu = self.config['train']['bsl'], self.config['train']['bsu'] # batch 64, 128
+        loader_train = SSLDataLoader(dtrain_lab, dtrain_unlab, bsl, bsu, self.args.workers) # 데이터 로더는 한번에?, 안에서 분리하는듯
+        loader_val = DataLoader(dval, batch_size=(bsl+bsu), shuffle=False, num_workers=self.args.workers)
+        loader_test = DataLoader(dtest, batch_size=(bsl+bsu), shuffle=False, num_workers=self.args.workers)
 
         return loader_train, loader_val, loader_test, Ttrain, Tval, Tnorm
 
@@ -86,5 +89,6 @@ class SSLTrainer(Trainer):
         if self.curr_iter >= self.config['train']['coeff_rampup']:
             return 1.0
         else:
+            # 계수 뻥튀기
             # return math.exp(-5 * (1 - current_iter / self.config['train']['coeff_rampup']) ** 2)
             return self.curr_iter / self.config['train']['coeff_rampup']

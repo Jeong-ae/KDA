@@ -1,0 +1,1 @@
+Val acc: 91.24 %Test acc: 91.24 %Median acc: 91.07 %

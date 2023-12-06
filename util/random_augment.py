@@ -15,8 +15,8 @@ class RandomAugment:
     """
     def __init__(self, N=4, M=6):
         """
-        :param N: int, [1, #ops]. max number of operations
-        :param M: int, [0, 9]. max magnitude of operations
+        :param N: int, [1, #ops]. max number of operations 최대 몇개
+        :param M: int, [0, 9]. max magnitude of operations 강도
         """
         self.operations = {
             'ShearX': lambda img, magnitude: self.shear_x(img, magnitude),

@@ -2,7 +2,7 @@
   "data":
   {
     "dataset": "cifar100",
-    "root_dir": "dataset/cifar-100",
+    "root_dir": "/data/cifar-100-python",
     "tgt_domains": "cifar100",
     "src_domains": null,
     "shape": 32,

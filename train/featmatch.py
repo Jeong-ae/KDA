@@ -16,7 +16,7 @@ from loss import common
 from util import misc, metric
 from util.command_interface import command_interface
 from util.reporter import Reporter
-
+from model.teacher import TeacherNetwork
 
 class FeatMatchTrainer(ssltrainer.SSLTrainer):
     def __init__(self, args, config):
@@ -24,17 +24,25 @@ class FeatMatchTrainer(ssltrainer.SSLTrainer):
         self.fu, self.pu = [], []
         self.fp, self.yp, self.lp = None, None, None
         self.criterion = getattr(common, self.config['loss']['criterion'])
-
+        self.kld = getattr(common, self.config['loss']['kld'])
         self.attr_objs.extend(['fu', 'pu', 'fp', 'yp', 'lp'])
         self.load(args.mode)
-
+    
+    def init_teacher(self):
+        model = TeacherNetwork(backbone=self.config['model']['backbone'],
+                               num_classes=self.config['model']['classes'],
+                               devices=self.args.devices,
+                               num_heads=self.config['model']['num_heads'],
+                               amp=self.args.amp)
+        print(f'Use [{self.config["model"]["backbone"]}] teacher model with [{misc.count_n_parameters(model):,}] parameters')
+        return model
     def init_model(self):
         model = FeatMatch(backbone=self.config['model']['backbone'],
                           num_classes=self.config['model']['classes'],
                           devices=self.args.devices,
                           num_heads=self.config['model']['num_heads'],
                           amp=self.args.amp)
-        print(f'Use [{self.config["model"]["backbone"]}] model with [{misc.count_n_parameters(model):,}] parameters')
+        print(f'Use [{self.config["model"]["backbone"]}] student model with [{misc.count_n_parameters(model):,}] parameters')
         return model
 
     def get_labeled_featrues(self):
@@ -43,7 +51,8 @@ class FeatMatchTrainer(ssltrainer.SSLTrainer):
         with torch.no_grad():
             labeled_dset = self.dataloader_train.labeled_dset.dataset
             xl = torch.stack([self.Tval(xi) for xi in labeled_dset.get_x()])
-            bs = (self.config['train']['bsl'] + self.config['train']['bsu'])*self.config['transform']['data_augment']['K']
+            #bs = (self.config['train']['bsl'] + self.config['train']['bsu'])*self.config['transform']['data_augment']['K']
+            bs = self.config['train']['bsl'] + self.config['train']['bsu']
             fl = []
             for i in range(math.ceil(len(xl) / bs)):
                 xli = self.Tnorm(xl[i*bs:min((i+1)*bs, len(xl))].to(self.default_device))
@@ -84,11 +93,12 @@ class FeatMatchTrainer(ssltrainer.SSLTrainer):
             return None, None
 
     def extract_fp(self):
-        fl, yl = self.get_labeled_featrues()
+        fl, yl = self.get_labeled_featrues() #(250,128), (250)
         fu, yu = self.get_unlabeled_features()
-        pk = self.config['model']['pk']
-        rl = self.config['model']['l_ratio']
+        pk = self.config['model']['pk'] #20, number of prototypes per epoch
+        rl = self.config['model']['l_ratio'] #0.5
 
+        all_classes = torch.unique(yl, sorted=True)
         fp, yp, lp = [], [], []
         for yi in torch.unique(yl, sorted=True):
             if fu is None:  # all prototypes extracted from labeled data
@@ -105,6 +115,7 @@ class FeatMatchTrainer(ssltrainer.SSLTrainer):
                     yp.append(torch.full((pkl,), yi, device=self.default_device, dtype=torch.long))
                     lp.append(torch.ones_like(yp[-1]))
                 else:
+                   # print("unlabeled in")
                     # prototypes extracted from labeled data
                     fpi = self.extract_fp_per_class(fl[yl == yi], max(1, int(round(pk*rl))), record_mean=True)
                     pkl = len(fpi)
@@ -117,9 +128,21 @@ class FeatMatchTrainer(ssltrainer.SSLTrainer):
                     fp.append(fpi)
                     yp.append(torch.full((pku,), yi, device=self.default_device, dtype=torch.long))
                     lp.append(torch.zeros_like(yp[-1]))
-        self.fp = torch.cat(fp).to(self.default_device)
-        self.yp = torch.cat(yp).to(self.default_device)
-        self.lp = torch.cat(lp).to(self.default_device)
+        self.fp = torch.cat(fp).to(self.default_device) #(200, 128)
+        self.yp = torch.cat(yp).to(self.default_device) #(200)
+        self.lp = torch.cat(lp).to(self.default_device) #(200)
+
+        self.fp, self.yp, self.lp = self.retrieve_topk()
+       # print("shape", self.fp.shape)
+
+    def retrieve_topk(self):
+        labels, counts = torch.unique(self.yp, return_counts=True)
+        top_k_labels = labels[counts.sort(descending=True).indices][:5]
+        indices = torch.where(self.yp.unsqueeze(1) == top_k_labels)[0]
+        selected_fp = self.fp[indices]
+        selected_yp = self.yp[indices]
+        selected_lp = self.lp[indices]
+        return selected_fp, selected_yp, selected_lp
 
     def extract_fp_per_class(self, fx, n, record_mean=True):
         if n == 1:
@@ -138,7 +161,7 @@ class FeatMatchTrainer(ssltrainer.SSLTrainer):
             else:
                 fp = self.kmeans(fx, n, 'cosine')
 
-        return fp
+        return fp #(20, 128)
 
     @staticmethod
     def kmeans(fx, n, metric='cosine'):
@@ -182,17 +205,17 @@ class FeatMatchTrainer(ssltrainer.SSLTrainer):
 
     def train1(self, xl, yl, xu):
         # Forward pass on original data
-        bsl, bsu, k, c = len(xl), len(xu), xl.size(1), self.config['model']['classes']
-        x = torch.cat([xl, xu], dim=0).reshape(-1, *xl.shape[2:])
-        logits_x = self.model(x)
-        logits_x = logits_x.reshape(bsl + bsu, k, c)
-        logits_xl, logits_xu = logits_x[:bsl], logits_x[bsl:]
+        bsl, bsu, k, c = len(xl), len(xu), xl.size(1), self.config['model']['classes'] # 64, 128, k:1, c:10
+        x = torch.cat([xl, xu], dim=0).reshape(-1, *xl.shape[2:]) #(192*2, 3, 32, 32)
+        logits_x = self.model(x) # (192*2, 10)
+        logits_x = logits_x.reshape(bsl + bsu, k, c) #(192, 2, 10)
+        logits_xl, logits_xu = logits_x[:bsl], logits_x[bsl:] #(64,2,10),(128,2,10)
 
         # Compute pseudo label
-        prob_xu_fake = torch.softmax(logits_xu[:, 0].detach(), dim=1)
-        prob_xu_fake = prob_xu_fake ** (1. / self.config['transform']['data_augment']['T'])
-        prob_xu_fake = prob_xu_fake / prob_xu_fake.sum(dim=1, keepdim=True)
-        prob_xu_fake = prob_xu_fake.unsqueeze(1).repeat(1, k, 1)
+        prob_xu_fake = torch.softmax(logits_xu[:, 0].detach(), dim=1) # 첫번째 증강 변형의 로짓만 선택 ; (128, 10), detach : 다른 tensor 객체로 분리, 특징은 requires grad가 false로 바뀜
+        prob_xu_fake = prob_xu_fake ** (1. / self.config['transform']['data_augment']['T']) # temperature
+        prob_xu_fake = prob_xu_fake / prob_xu_fake.sum(dim=1, keepdim=True) # 확률값을 정규화 하여 각 샘플의 확률 합이 1이 되도록 함
+        prob_xu_fake = prob_xu_fake.unsqueeze(1).repeat(1, k, 1) #(128, 2, 10)
 
         # Mixup perturbation
         xu = xu.reshape(-1, *xu.shape[2:])
@@ -219,7 +242,6 @@ class FeatMatchTrainer(ssltrainer.SSLTrainer):
         # Total loss
         coeff = self.get_consistency_coeff()
         loss = loss_pred + coeff*self.config['loss']['mix']*loss_con
-
         # Prediction
         pred_x = torch.softmax(logits_xl[:, 0].detach(), dim=1)
 
@@ -255,6 +277,15 @@ class FeatMatchTrainer(ssltrainer.SSLTrainer):
         logits_xgl_mix, logits_xgu_mix = logits_xg_mix[:Nl], logits_xg_mix[Nl:]
         logits_xfl_mix, logits_xfu_mix = logits_xf_mix[:Nl], logits_xf_mix[Nl:]
 
+        coeff = self.get_consistency_coeff()
+
+        # KLD Loss
+        logits_teacher_mix = self.teacher(x_mix, self.fp)
+        logits_teacher_l_mix, logits_teacher_u_mix = logits_teacher_mix[:Nl], logits_teacher_mix[Nl:]
+        loss_kld_l = self.kld(None, probl_mix, logits_teacher_l_mix, None)
+        loss_kld_u = self.kld(None, probu_mix, logits_teacher_u_mix, None)
+        loss_kld = loss_kld_l + coeff*(self.config['loss']['mix'] * loss_kld_u)
+
         # CLF loss
         loss_pred = self.criterion(None, probl_mix, logits_xgl_mix, None)
 
@@ -265,9 +296,9 @@ class FeatMatchTrainer(ssltrainer.SSLTrainer):
         loss_graph = self.criterion(None, probu_mix, logits_xfu_mix, None)
 
         # Total loss
-        coeff = self.get_consistency_coeff()
         loss = loss_pred + coeff * (self.config['loss']['mix'] * loss_con + self.config['loss']['graph'] * loss_graph)
-
+        loss = loss + loss_kld
+      #  print(loss_kld, loss)
         # Prediction
         pred_x = torch.softmax(logits_xgl[:, 0].detach(), dim=1)
 
@@ -352,7 +383,7 @@ class FeatMatchTrainer(ssltrainer.SSLTrainer):
             pred_x, loss, loss_pred, loss_con, loss_graph = self.train2(xl, yl, xu)
         else:
             self.model.set_mode('train')
-            if self.curr_iter % self.config['train']['sample_interval'] == 0:
+            if self.curr_iter % self.config['train']['sample_interval'] == 0: # update prototype 주기
                 self.extract_fp()
             pred_x, loss, loss_pred, loss_con, loss_graph = self.train2(xl, yl, xu)
 

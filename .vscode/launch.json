@@ -1,0 +1,26 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": [
+                "-cf", "config/cifar10/[cifar10][test][wrn][250].json",
+                "-d", "0", "1",
+                "-n", "[cifar10][test][wrn][250]",
+                "-i", "1",
+                "-o",
+                "-a",
+                "-ow",
+                "--ckpt", "Phase_one/[cifar10][test][wrn][250]/run0/best_ckpt",
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ]
+}

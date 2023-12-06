@@ -21,14 +21,12 @@ def get_model(arch):
         raise KeyError
     return model
 
-
 def make_backbone(backbone):
     model = get_model(backbone)
     fext = nn.Sequential(*list(model.children())[:-1], nn.Flatten())
-    fdim = model.fc.in_features
+    fdim = model.fc.in_features # (in_features, out_features)
 
-    return fext, fdim
-
+    return fext, fdim #model state dict, linear 이전까지의 구 (feature extractor), feature dimension
 
 class AmpModel(nn.Module):
     def __init__(self, model, amp=True):

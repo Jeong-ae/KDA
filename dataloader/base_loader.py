@@ -9,7 +9,7 @@ from torch.utils.data import Sampler
 
 class SSLDataLoader(object):
     def __init__(self, labeled_dset, unlabeled_dset, bsl, bsu, num_workers):
-        bs = bsl + bsu
+        bs = bsl + bsu # 64 + 128
         sampler_lab = InfBatchSampler(len(labeled_dset), bsl)
         sampler_unlab = InfBatchSampler(len(unlabeled_dset), bsu)
         self.labeled_dset = DataLoader(labeled_dset, batch_sampler=sampler_lab, num_workers=int(num_workers*bsl/bs))
@@ -21,7 +21,7 @@ class SSLDataLoader(object):
     def __iter__(self):
         return self
 
-    def __next__(self):
+    def __next__(self): # label이 있는 데이터의 다음 배치를 가져오고 그 다음으로 레이블이 없는 데이터의 다음 배치를 가져온다.
         try:
             xl, yl = next(self.labeled_iter)
         except StopIteration:
@@ -34,7 +34,7 @@ class SSLDataLoader(object):
             self.unlabeled_iter = iter(self.unlabeled_dset)
             xu = next(self.unlabeled_iter)
 
-        return xl, yl, xu
+        return xl, yl, xu # xl : (64, 3, 32, 32), yl:(64), xu : (128, 3, 32, 32)
 
 
 class InfBatchSampler(Sampler):
@@ -56,12 +56,13 @@ class InfBatchSampler(Sampler):
 class SSLDataset(Dataset):
     def __init__(self, x, y, Taggr, Tsimp, K, shape):
         super().__init__()
-        self.x = x
-        self.y = y
-        self.Taggr = Taggr
-        self.Tsimp = Tsimp
-        self.K = K
-        self.shape = shape
+
+        self.x = x # (250, 32, 32, 3)
+        self.y = y # (250, )
+        self.Taggr = Taggr # augmentation, Aggressive 
+        self.Tsimp = Tsimp # augmentation, Simple
+        self.K = K # None
+        self.shape = shape # 32
 
     def read_x(self, idx):
         raise NotImplementedError
@@ -95,14 +96,18 @@ class SSLDataset(Dataset):
 
     def __getitem__(self, idx):
         xi = self.read_x(idx)
-        if self.K is not None:
+
+        if self.K == 0:
+            x = self.Taggr(xi)
+            x = x.squeeze(0)
+        elif self.K is not None:
             x = [self.Tsimp(xi)]
             for _ in range(self.K):
                 x.append(self.Taggr(xi))
-            x = torch.stack(x)
+            x = torch.stack(x) # 차원이 하나 더 늘어남, (9, 3, 32, 32)
         else:
+        # simple aug 또는 aggressive aug 중에 하나만 하자
             x = self.Tsimp(xi)
-
         if self.y is not None:
             return x, self.y[idx]
         else:

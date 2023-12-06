@@ -20,6 +20,7 @@ class Cifar10SSL(CifarSSL):
         root_dir = Path(root_dir)
 
         # test
+        print(root_dir)
         file = root_dir/'test_batch'
         batch = pickle.load(open(file, 'rb'), encoding='latin1')
         xt = np.transpose(batch['data'].reshape((-1, 3, 32, 32)), (0, 2, 3, 1))
@@ -29,19 +30,19 @@ class Cifar10SSL(CifarSSL):
         files = [root_dir/f'data_batch_{i}' for i in range(1, 6)]
         batches = [pickle.load(open(file, 'rb'), encoding='latin1') for file in files]
         x = [batch['data'].reshape((-1, 3, 32, 32)) for batch in batches]
-        x = np.concatenate([np.transpose(xi, (0, 2, 3, 1)) for xi in x])
-        y = np.concatenate([np.array(batch['labels'], dtype=np.int) for batch in batches])
+        x = np.concatenate([np.transpose(xi, (0, 2, 3, 1)) for xi in x]) # all dataset
+        y = np.concatenate([np.array(batch['labels'], dtype=np.int) for batch in batches]) # all dataset
         if r_val is not None:
             (xv, yv), (x, y) = data.split_data(x.copy(), y.copy(), rand_seed, r_val)
         else:
-            xv, yv = xt, yt
-        (xl, yl), (xu, yu) = data.split_data(x.copy(), y.copy(), rand_seed, r_lab)
+            xv, yv = xt, yt # val == test
+        (xl, yl), (xu, yu) = data.split_data(x.copy(), y.copy(), rand_seed, r_lab) # labeled, unlabeled
 
         # reduce data
         if r_data is not None:
             xu, yu = data.split_data(xu.copy(), yu.copy(), rand_seed, r_data)[0]
 
-        return xl, yl, xu, xv, yv, xt, yt
+        return xl, yl, xu, xv, yv, xt, yt # xlabeled, ylabeled, xunlabeled, xvalidation, yvalidation, xtest, ytest
 
 
 class Cifar100SSL(CifarSSL):

@@ -1,0 +1,4 @@
+Results of experiment [cifar10][test][wrn][250]: 
+  - Average val acc in 3 runs: 92.39 +/- 1.06 % , [93.79, 92.15, 91.24]
+  - Average test acc in 3 runs: 92.39 +/- 1.06 % , [93.79, 92.15, 91.24]
+  - Average median acc in 3 runs: 92.28 +/- 1.10 % , [93.73, 92.05, 91.07]

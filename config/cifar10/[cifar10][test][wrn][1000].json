@@ -2,7 +2,7 @@
   "data":
   {
     "dataset": "cifar10",
-    "root_dir": "dataset/cifar-10",
+    "root_dir": "/nfs_shared_/swwoo/data/cifar-10-batches-py",
     "tgt_domains": "cifar10",
     "src_domains": null,
     "shape": 32,
@@ -60,7 +60,7 @@
     {
       "N": 2,
       "M": 9,
-      "K": 8,
+      "K": 1,
       "T": 0.75
     }
   }

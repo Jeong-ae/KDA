@@ -2,7 +2,7 @@
   "data":
   {
     "dataset": "cifar10",
-    "root_dir": "dataset/cifar-10",
+    "root_dir": "/data/cifar-10-batches-py",
     "tgt_domains": "cifar10",
     "src_domains": null,
     "shape": 32,
@@ -30,7 +30,8 @@
   {
     "mix": 0.5,
     "graph": 2.0,
-    "criterion": "log_loss"
+    "criterion": "log_loss",
+    "kld": "kld_loss"
   },
 
   "train":
@@ -60,7 +61,7 @@
     {
       "N": 2,
       "M": 9,
-      "K": 8,
+      "K": 1,
       "T": 0.75
     }
   }

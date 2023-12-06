@@ -28,6 +28,14 @@ class Trainer(object):
         self.dataloader_train, self.dataloader_val, self.dataloader_test, self.Ttrain, self.Tval, self.Tnorm = \
             self.init_dataloader()
         self.model = self.init_model().to(self.default_device)
+        self.teacher = self.init_teacher().to(self.default_device)
+        state_dict = torch.load(args.ckpt)
+        msg = self.teacher.load_state_dict(state_dict['model'])
+        assert msg.missing_keys == []
+        self.teacher.freeze()
+        for param in self.teacher.parameters():
+            if param.requires_grad:
+                print("error")
         self.optimizer = self.init_optimizer()
         self.scheduler, self.total_iters = self.init_scheduler()
 
