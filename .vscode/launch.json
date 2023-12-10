@@ -10,14 +10,14 @@
             "request": "launch",
             "program": "${file}",
             "args": [
-                "-cf", "config/cifar10/[cifar10][test][wrn][250].json",
+                "-cf", "config/cifar100/[cifar100][test][cnn13][4000].json",
                 "-d", "0", "1",
-                "-n", "[cifar10][test][wrn][250]",
+                "-n", "[cifar100][test][cnn13][4000]",
                 "-i", "1",
                 "-o",
                 "-a",
                 "-ow",
-                "--ckpt", "Phase_one/[cifar10][test][wrn][250]/run0/best_ckpt",
+                "--ckpt", "teacher_weight/cifar100/cnn-13/best_ckpt",
             ],
             "console": "integratedTerminal",
             "justMyCode": true

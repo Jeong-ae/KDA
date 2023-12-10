@@ -5,5 +5,8 @@ sync-*
 weights
 vis
 legacy
+teacher_weight
+Phase_one
+Phase_full
 
 !dataset/.gitkeep 

@@ -26,14 +26,21 @@ class SSLTrainer(Trainer):
         # ImageNet: mean: [0.485, 0.456, 0.406], std: [0.229, 0.224, 0.225]
         # STL: mean: [0.44087802, 0.42790631, 0.38678794], std: [0.26826769, 0.26104504, 0.26866837]
         # mini-ImageNet: mean: [0.47872189, 0.44985512, 0.40134091], st: [0.27524031, 0.26572543, 0.28019405]
-
         Ttrain = RandomAugment(N=self.config['transform']['data_augment']['N'], # 2
-                               M=self.config['transform']['data_augment']['M']) # 9
-        Ttrain = T.Compose([Ttrain, T.ToTensor()])
-        Tval = T.ToTensor()
-        Tsimple = T.Compose([T.RandomHorizontalFlip(),
-                             T.RandomCrop(self.config['data']['shape'], padding=self.config['data']['shape']//16),
-                             T.ToTensor()])
+                        M=self.config['transform']['data_augment']['M']) # 9
+        if self.model.backbone == 'vit':
+            Ttrain = T.Compose([Ttrain, T.Resize((224,224)), T.ToTensor()])
+            Tval = T.Compose([T.Resize((224,224)), T.ToTensor()])
+            Tsimple = T.Compose([T.RandomHorizontalFlip(),
+                                T.RandomCrop(self.config['data']['shape'], padding=self.config['data']['shape']//16),
+                                T.Resize((224,224)),
+                                T.ToTensor()])   
+        else:
+            Ttrain = T.Compose([Ttrain, T.ToTensor()])
+            Tval = T.ToTensor()
+            Tsimple = T.Compose([T.RandomHorizontalFlip(),
+                                T.RandomCrop(self.config['data']['shape'], padding=self.config['data']['shape']//16),
+                                T.ToTensor()])
 
         if self.config['transform']['preprocess']['type'] == 'zca':
             Tnorm = data.ZCATransformer(self.config['transform']['preprocess']['config'])
@@ -69,10 +76,16 @@ class SSLTrainer(Trainer):
 
         K, shape = self.config['transform']['data_augment']['K'], self.config['data']['shape'] # 8, 32 
         # 8번 반복 augmentation한다는거같음
-        dtrain_lab = dset(x=xl, y=yl, Taggr=Ttrain, Tsimp=Tsimple, K=K, shape=shape) #개별적으로 데이터셋 만들고
-        dtrain_unlab = dset(x=xu, y=None, Taggr=Ttrain, Tsimp=Tsimple, K=K, shape=shape)
-        dval = dset(x=xv, y=yv, Taggr=None, Tsimp=Tval, K=None, shape=shape)
-        dtest = dset(x=xt, y=yt, Taggr=None, Tsimp=Tval, K=None, shape=shape)
+        if self.model.backbone == 'vit':
+            dtrain_lab = dset(x=xl, y=yl, Taggr=Ttrain, Tsimp=Tsimple, K=K, shape=224) #개별적으로 데이터셋 만들고
+            dtrain_unlab = dset(x=xu, y=None, Taggr=Ttrain, Tsimp=Tsimple, K=K, shape=224)
+            dval = dset(x=xv, y=yv, Taggr=None, Tsimp=Tval, K=None, shape=224)
+            dtest = dset(x=xt, y=yt, Taggr=None, Tsimp=Tval, K=None, shape=224)
+        else:
+            dtrain_lab = dset(x=xl, y=yl, Taggr=Ttrain, Tsimp=Tsimple, K=K, shape=shape) #개별적으로 데이터셋 만들고
+            dtrain_unlab = dset(x=xu, y=None, Taggr=Ttrain, Tsimp=Tsimple, K=K, shape=shape)
+            dval = dset(x=xv, y=yv, Taggr=None, Tsimp=Tval, K=None, shape=shape)
+            dtest = dset(x=xt, y=yt, Taggr=None, Tsimp=Tval, K=None, shape=shape)
 
         bsl, bsu = self.config['train']['bsl'], self.config['train']['bsu'] # batch 64, 128
         loader_train = SSLDataLoader(dtrain_lab, dtrain_unlab, bsl, bsu, self.args.workers) # 데이터 로더는 한번에?, 안에서 분리하는듯

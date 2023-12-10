@@ -29,12 +29,13 @@ class FeatMatchTrainer(ssltrainer.SSLTrainer):
         self.load(args.mode)
     
     def init_teacher(self):
-        model = TeacherNetwork(backbone=self.config['model']['backbone'],
+        arch = self.args.ckpt.split('/')[-2]
+        model = TeacherNetwork(backbone=arch,
                                num_classes=self.config['model']['classes'],
                                devices=self.args.devices,
                                num_heads=self.config['model']['num_heads'],
                                amp=self.args.amp)
-        print(f'Use [{self.config["model"]["backbone"]}] teacher model with [{misc.count_n_parameters(model):,}] parameters')
+        print(f'Use [{arch}] teacher model with [{misc.count_n_parameters(model):,}] parameters')
         return model
     def init_model(self):
         model = FeatMatch(backbone=self.config['model']['backbone'],
@@ -43,7 +44,7 @@ class FeatMatchTrainer(ssltrainer.SSLTrainer):
                           num_heads=self.config['model']['num_heads'],
                           amp=self.args.amp)
         print(f'Use [{self.config["model"]["backbone"]}] student model with [{misc.count_n_parameters(model):,}] parameters')
-        return model
+        return model 
 
     def get_labeled_featrues(self):
         mode = self.model.training

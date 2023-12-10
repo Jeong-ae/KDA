@@ -46,15 +46,23 @@ class FeatMatch(nn.Module):
         self.devices = devices
         self.default_device = torch.device('cuda', devices[0]) if devices is not None else torch.device('cpu')
         fext, self.fdim = make_backbone(backbone) # (, 128)
-        self.fext = nn.DataParallel(AmpModel(fext, amp), devices)
+        if backbone != 'vit':
+            self.fext = nn.DataParallel(AmpModel(fext, amp), devices)
+        else : self.fext = fext
         self.atten = AttenHead(self.fdim, num_heads)
         self.clf = nn.Linear(self.fdim, num_classes)
+        self.backbone=backbone
 
     def set_mode(self, mode):
         self.mode = mode
 
     def extract_feature(self, x):
-        return self.fext(x)
+        if self.backbone == 'vit':
+            x = self.fext.forward_features(x)
+            x = x[:,0,:].reshape(-1, 192)
+            return x
+        else:
+            return self.fext(x)
 
     def forward(self, x, fp=None):
         if self.mode == 'fext':

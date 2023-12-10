@@ -17,7 +17,7 @@
   {
     "num_layers": 1,
     "num_heads": 4,
-    "backbone": "cnn-13",
+    "backbone": "resnet-18",
     "dropout": 0.0,
     "classes": 100,
     "negative_slope": 0.0,
@@ -30,7 +30,8 @@
   {
     "mix": 0.5,
     "graph": 2.0,
-    "criterion": "log_loss"
+    "criterion": "log_loss",
+    "kld": "kld_loss"
   },
 
   "train":
@@ -52,15 +53,14 @@
   {
     "preprocess":
     {
-      "type": "zca",
-      "config": "config/cifar100_zca.npz"
+      "type": "mean-std"
     },
 
     "data_augment":
     {
       "N": 2,
       "M": 9,
-      "K": 8,
+      "K": 1,
       "T": 0.75
     }
   }

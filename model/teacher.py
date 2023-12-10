@@ -47,6 +47,7 @@ class TeacherNetwork(nn.Module):
         self.fext = nn.DataParallel(AmpModel(fext, amp), devices)
         self.atten = AttenHead(self.fdim, num_heads)
         self.clf = nn.Linear(self.fdim, num_classes)
+        self.backbone=backbone
 
     def freeze(self):
         for param in self.fext.parameters():

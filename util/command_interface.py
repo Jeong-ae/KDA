@@ -19,7 +19,7 @@ def command_interface(title=None):
     parser.add_argument('--overwrite', '-ow', action='store_true', help='if specified, overwrite existing folder without asking')
     parser.add_argument('--workers', '-w', default=8, type=int, help='number of workers for the dataloader')
     parser.add_argument('--amp', '-a', action='store_true', help='if specified, turn amp on')
-    parser.add_argument('--ckpt', default="Phase_one/[cifar10][test][wrn][250]/run0/best_ckpt", type=str, help='Teacher checkpoint')
+    parser.add_argument('--ckpt', default="teacher_weight/cifar100/vit/best_ckpt", type=str, help='Teacher checkpoint')
     args = parser.parse_args()
     pprint(vars(args))
 
