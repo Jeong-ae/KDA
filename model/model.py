@@ -45,12 +45,14 @@ class FeatMatch(nn.Module):
         self.num_heads = num_heads
         self.devices = devices
         self.default_device = torch.device('cuda', devices[0]) if devices is not None else torch.device('cpu')
-        fext, self.fdim = make_backbone(backbone) # (, 128)
+        fext, self.fdim = make_backbone(backbone) # (, 512)
         if backbone != 'vit':
             self.fext = nn.DataParallel(AmpModel(fext, amp), devices)
         else : self.fext = fext
-        self.atten = AttenHead(self.fdim, num_heads)
-        self.clf = nn.Linear(self.fdim, num_classes)
+        self.adapt = 128
+        self.Lin = nn.Linear(512,self.adapt)
+        self.atten = AttenHead(self.adapt, num_heads)
+        self.clf = nn.Linear(self.adapt, num_classes)
         self.backbone=backbone
 
     def set_mode(self, mode):
@@ -62,26 +64,28 @@ class FeatMatch(nn.Module):
             x = x[:,0,:].reshape(-1, 192)
             return x
         else:
-            return self.fext(x)
+            x = self.fext(x)
+            x = self.Lin(x)
+            return x
 
     def forward(self, x, fp=None):
         if self.mode == 'fext':
             return self.extract_feature(x)
 
         elif self.mode == 'pretrain': # 얘는 feature를 뽑고, clf 함
-            fx = self.extract_feature(x) # (192, 128)
+            fx = self.extract_feature(x) # (192, 512)
             cls_x = self.clf(fx) # (192, 10)
 
             return cls_x
 
         elif self.mode == 'train': # 얘는 feature를 뽑고, attention module을 거치고 clf 함
             fx = self.extract_feature(x)
-            if self.devices is not None:
-                inputs = (fx, fp.unsqueeze(0).repeat(len(self.devices), 1, 1))
-                fxg, wx = nn.parallel.data_parallel(self.atten, inputs, device_ids=self.devices)
-            else:
+            # if self.devices is not None:
+            #     inputs = (fx, fp.unsqueeze(0).repeat(len(self.devices), 1, 1))
+            #     fxg, wx = nn.parallel.data_parallel(self.atten, inputs, device_ids=self.devices)
+            # else:
                 # (b,128), (b,4,10)
-                fxg, wx = self.atten(fx, fp.unsqueeze(0))
+            fxg, wx = self.atten(fx, fp.unsqueeze(0))
 
             cls_xf = self.clf(fx) # (b, 10) FA 통과안한놈
             cls_xg = self.clf(fxg) # (b, 10) FA 통과한놈

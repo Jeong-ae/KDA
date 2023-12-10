@@ -43,7 +43,7 @@ class TeacherNetwork(nn.Module):
         self.num_classes = num_classes
         self.num_heads = num_heads
         self.devices=devices
-        fext, self.fdim = make_backbone(backbone) #(b*128), 128
+        fext, self.fdim = make_teacher_backbone(backbone) #(b*128), 128
         self.fext = nn.DataParallel(AmpModel(fext, amp), devices)
         self.atten = AttenHead(self.fdim, num_heads)
         self.clf = nn.Linear(self.fdim, num_classes)
@@ -59,10 +59,10 @@ class TeacherNetwork(nn.Module):
 
     def forward(self, x, fp=None):
         x = self.fext(x)
-        if self.devices is not None:
-            inputs = (x, fp.unsqueeze(0).repeat(len(self.devices), 1, 1))
-            x, wx = nn.parallel.data_parallel(self.atten, inputs, device_ids=self.devices)
-        else:
-            x, wx = self.atten(x, fp.unsqueeze(0))
+        # if self.devices is not None:
+        #     inputs = (x, fp.unsqueeze(0).repeat(len(self.devices), 1, 1))
+        #     x, wx = nn.parallel.data_parallel(self.atten, inputs, device_ids=self.devices)
+        # else:
+        x, wx = self.atten(x, fp.unsqueeze(0))
         x = self.clf(x)
         return x

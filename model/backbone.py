@@ -33,8 +33,16 @@ def make_backbone(backbone):
     else:
         fdim = 192
         fext = model
-        
-        
+    return fext, fdim #model state dict, linear 이전까지의 구 (feature extractor), feature dimension
+
+def make_teacher_backbone(backbone):
+    model = get_model(backbone)
+    if backbone != "vit":
+        fdim = model.fc.in_features # (in_features, out_features)
+        fext = nn.Sequential(*list(model.children())[:-1], nn.Flatten()) # 마지막 fc 빼고 해당
+    else:
+        fdim = 192
+        fext = model 
 
     return fext, fdim #model state dict, linear 이전까지의 구 (feature extractor), feature dimension
 

@@ -28,7 +28,7 @@ class Trainer(object):
         self.teacher = self.init_teacher().to(self.default_device)
         if self.teacher.backbone != 'vit':
             state_dict = torch.load(args.ckpt)
-            msg = self.teacher.load_state_dict(state_dict['model'])
+            msg = self.teacher.load_state_dict(state_dict['model'], strict=False)
             assert msg.missing_keys == []
             self.teacher.freeze()
             for param in self.teacher.parameters():
