@@ -25,10 +25,19 @@ class Trainer(object):
         self.init_rand_seed()
         self.default_device = self.init_device()
         self.model = self.init_model().to(self.default_device)
-        self.teacher = self.init_teacher().to(self.default_device)
-        if self.teacher.backbone != 'vit':
+        if self.args.teacher:
+            self.teacher = self.init_teacher().to(self.default_device)
             state_dict = torch.load(args.ckpt)
-            msg = self.teacher.load_state_dict(state_dict['model'], strict=False)
+            for k in list(state_dict['model'].keys()):
+                if k.startswith("fext.module.model.1.vit_model"):
+                    state_dict['model']['fext'+k[len("fext.module.model.1.vit_model") :]] = state_dict['model'][k]
+                    del state_dict['model'][k]
+                else:
+                    state_dict['model']['fext'+ k] = state_dict['model'][k]
+                    del state_dict['model'][k]
+                    state_dict['model'][k] = state_dict['model']['fext'+k]
+                    del state_dict['model']['fext'+k]
+            msg = self.teacher.load_state_dict(state_dict['model'])
             assert msg.missing_keys == []
             self.teacher.freeze()
             for param in self.teacher.parameters():

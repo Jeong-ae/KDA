@@ -19,7 +19,8 @@ def get_model(arch):
         depth, width = int(depth), int(width)
         model = WideResNet(num_classes=10, depth=depth, widen_factor=width)
     elif arch == 'vit':
-        model = timm.create_model('vit_tiny_patch16_224', pretrained=True, num_classes=0)
+        model = timm.create_model('vit_tiny_patch16_224', pretrained=True, num_classes=100)
+        print("create vit model")
 
     else:
         raise KeyError

@@ -37,8 +37,8 @@ class AttenHead(nn.Module):
         return fx, w
 
 
-class FeatMatch(nn.Module):
-    def __init__(self, backbone, num_classes, devices, num_heads=1, amp=True):
+class FeatMatch(nn.Module): # Student
+    def __init__(self, backbone, num_classes, devices,  pretrain, num_heads=1, amp=True):
         super().__init__()
         self.mode = 'train'
         self.num_classes = num_classes
@@ -49,10 +49,15 @@ class FeatMatch(nn.Module):
         if backbone != 'vit':
             self.fext = nn.DataParallel(AmpModel(fext, amp), devices)
         else : self.fext = fext
-        self.adapt = 128
-        self.Lin = nn.Linear(512,self.adapt)
-        self.atten = AttenHead(self.adapt, num_heads)
-        self.clf = nn.Linear(self.adapt, num_classes)
+        if not pretrain:
+            self.adapt = 512 #(티쳐가 CNN이면 128 VIT면 192 RESNET이면 512)
+            self.Lin = nn.Linear(128,self.adapt)
+            self.atten = AttenHead(self.adapt, num_heads)
+            self.clf = nn.Linear(self.adapt, num_classes)
+        else:
+            self.Lin = nn.Identity()
+            self.atten = AttenHead(self.fdim, num_heads)
+            self.clf = nn.Linear(self.fdim, num_classes)
         self.backbone=backbone
 
     def set_mode(self, mode):
@@ -60,12 +65,12 @@ class FeatMatch(nn.Module):
 
     def extract_feature(self, x):
         if self.backbone == 'vit':
-            x = self.fext.forward_features(x)
-            x = x[:,0,:].reshape(-1, 192)
+            x = self.fext.forward_features(x) # (batch, 197, 192)
+            x = x[:,0,:].reshape(-1, 192) #(batch, 192)
             return x
         else:
-            x = self.fext(x)
-            x = self.Lin(x)
+            x = self.fext(x) # feature extractor , (batch, 196, 192) -> (batch, 192)
+            x = self.Lin(x) #linear
             return x
 
     def forward(self, x, fp=None):
@@ -80,12 +85,11 @@ class FeatMatch(nn.Module):
 
         elif self.mode == 'train': # 얘는 feature를 뽑고, attention module을 거치고 clf 함
             fx = self.extract_feature(x)
-            # if self.devices is not None:
-            #     inputs = (fx, fp.unsqueeze(0).repeat(len(self.devices), 1, 1))
-            #     fxg, wx = nn.parallel.data_parallel(self.atten, inputs, device_ids=self.devices)
-            # else:
-                # (b,128), (b,4,10)
-            fxg, wx = self.atten(fx, fp.unsqueeze(0))
+            if self.devices is not None:
+                inputs = (fx, fp.unsqueeze(0).repeat(len(self.devices), 1, 1))
+                fxg, wx = nn.parallel.data_parallel(self.atten, inputs, device_ids=self.devices)
+            else:
+                fxg, wx = self.atten(fx, fp.unsqueeze(0))
 
             cls_xf = self.clf(fx) # (b, 10) FA 통과안한놈
             cls_xg = self.clf(fxg) # (b, 10) FA 통과한놈

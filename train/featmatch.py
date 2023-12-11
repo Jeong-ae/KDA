@@ -42,7 +42,8 @@ class FeatMatchTrainer(ssltrainer.SSLTrainer):
                           num_classes=self.config['model']['classes'],
                           devices=self.args.devices,
                           num_heads=self.config['model']['num_heads'],
-                          amp=self.args.amp)
+                          amp=self.args.amp,
+                          pretrain = self.args.pretrain)
         print(f'Use [{self.config["model"]["backbone"]}] student model with [{misc.count_n_parameters(model):,}] parameters')
         return model 
 
@@ -298,7 +299,8 @@ class FeatMatchTrainer(ssltrainer.SSLTrainer):
 
         # Total loss
         loss = loss_pred + coeff * (self.config['loss']['mix'] * loss_con + self.config['loss']['graph'] * loss_graph)
-        loss = loss + loss_kld
+        if self.args.kld:
+            loss = loss + loss_kld
       #  print(loss_kld, loss)
         # Prediction
         pred_x = torch.softmax(logits_xgl[:, 0].detach(), dim=1)
