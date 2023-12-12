@@ -17,7 +17,7 @@
   {
     "num_layers": 1,
     "num_heads": 4,
-    "backbone": "cnn-13",
+    "backbone": "vit",
     "dropout": 0.0,
     "classes": 100,
     "negative_slope": 0.0,
@@ -36,9 +36,9 @@
 
   "train":
   {
-    "bsl": 4,
-    "bsu": 8,
-    "lr": 0.01,
+    "bsl": 32,
+    "bsu": 64,
+    "lr": 0.001,
     "mom": 0.95,
     "weight_decay": 2e-4,
     "pretrain_iters": 3000,

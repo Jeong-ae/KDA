@@ -32,7 +32,7 @@ class Trainer(object):
             if self.teacher.backbone == 'vit':
                 for k in list(state_dict['model'].keys()):
                     if k.startswith("fext.module.model.1.vit_model"):
-                        state_dict['model']['fext.module.model'+k[len("fext.module.model.1.vit_model") :]] = state_dict['model'][k]
+                        state_dict['model']['fext'+k[len("fext.module.model.1.vit_model") :]] = state_dict['model'][k]
                         del state_dict['model'][k]
                     else:
                         state_dict['model']['fext'+ k] = state_dict['model'][k]

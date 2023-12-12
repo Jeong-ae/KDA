@@ -57,3 +57,6 @@ class AmpModel(nn.Module):
     def forward(self, x):
         with amp.autocast(enabled=self.amp):
             return self.model(x)
+    def forward_features(self, x):
+        with amp.autocast(enabled=self.amp):
+            return self.model.forward_features(x)

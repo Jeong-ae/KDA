@@ -48,6 +48,7 @@ class TeacherNetwork(nn.Module):
         #     self.fext = nn.DataParallel(AmpModel(fext, amp), devices)
         # else : self.fext = fext
         self.fext = nn.DataParallel(AmpModel(fext, amp), devices)
+        self.fext = fext
         self.atten = AttenHead(self.fdim, num_heads)
         self.clf = nn.Linear(self.fdim, num_classes)
         self.backbone=backbone
@@ -62,7 +63,7 @@ class TeacherNetwork(nn.Module):
 
     def forward(self, x, fp=None):
         if self.backbone == 'vit':
-            x = self.fext.module.forward_features(x)
+            x = self.fext.forward_features(x)
             x = x[:,0,:].reshape(-1, 192)
         else:
             x = self.fext(x)
