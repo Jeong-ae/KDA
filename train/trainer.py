@@ -28,15 +28,19 @@ class Trainer(object):
         if self.args.teacher:
             self.teacher = self.init_teacher().to(self.default_device)
             state_dict = torch.load(args.ckpt)
-            for k in list(state_dict['model'].keys()):
-                if k.startswith("fext.module.model.1.vit_model"):
-                    state_dict['model']['fext'+k[len("fext.module.model.1.vit_model") :]] = state_dict['model'][k]
-                    del state_dict['model'][k]
-                else:
-                    state_dict['model']['fext'+ k] = state_dict['model'][k]
-                    del state_dict['model'][k]
-                    state_dict['model'][k] = state_dict['model']['fext'+k]
-                    del state_dict['model']['fext'+k]
+            ## VIT 만 해당됨
+            if self.teacher.backbone == 'vit':
+                for k in list(state_dict['model'].keys()):
+                    if k.startswith("fext.module.model.1.vit_model"):
+                        state_dict['model']['fext.module.model'+k[len("fext.module.model.1.vit_model") :]] = state_dict['model'][k]
+                        del state_dict['model'][k]
+                    else:
+                        state_dict['model']['fext'+ k] = state_dict['model'][k]
+                        del state_dict['model'][k]
+                        state_dict['model'][k] = state_dict['model']['fext'+k]
+                        del state_dict['model']['fext'+k]
+            else:
+                pass
             msg = self.teacher.load_state_dict(state_dict['model'])
             assert msg.missing_keys == []
             self.teacher.freeze()

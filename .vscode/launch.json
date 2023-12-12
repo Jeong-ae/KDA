@@ -18,7 +18,6 @@
                 "-a",
                 "-ow",
                 "--ckpt", "teacher_weight/cifar100/vit/best_ckpt",
-                "--pretrain", "True",
             ],
             "console": "integratedTerminal",
             "justMyCode": true

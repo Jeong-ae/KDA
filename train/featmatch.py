@@ -301,6 +301,7 @@ class FeatMatchTrainer(ssltrainer.SSLTrainer):
         loss = loss_pred + coeff * (self.config['loss']['mix'] * loss_con + self.config['loss']['graph'] * loss_graph)
         if self.args.kld:
             loss = loss + loss_kld
+            #print(loss-loss_kld, loss_kld)
       #  print(loss_kld, loss)
         # Prediction
         pred_x = torch.softmax(logits_xgl[:, 0].detach(), dim=1)
@@ -431,7 +432,7 @@ class FeatMatchTrainer(ssltrainer.SSLTrainer):
 
 if __name__ == '__main__':
     args, config, save_root = command_interface()
-
+    torch.backends.cudnn.benchmark = True
     r = args.rand_seed
     reporter = Reporter(save_root, args)
 

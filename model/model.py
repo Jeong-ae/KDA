@@ -46,11 +46,12 @@ class FeatMatch(nn.Module): # Student
         self.devices = devices
         self.default_device = torch.device('cuda', devices[0]) if devices is not None else torch.device('cpu')
         fext, self.fdim = make_backbone(backbone) # (, 512)
-        if backbone != 'vit':
-            self.fext = nn.DataParallel(AmpModel(fext, amp), devices)
-        else : self.fext = fext
+        #if backbone != 'vit':
+        self.fext = nn.DataParallel(AmpModel(fext, amp), devices)
+        #self.fext = fext
+       # else : self.fext = fext
         if not pretrain:
-            self.adapt = 512 #(티쳐가 CNN이면 128 VIT면 192 RESNET이면 512)
+            self.adapt = 192 #(티쳐가 CNN이면 128 VIT면 192 RESNET이면 512)
             self.Lin = nn.Linear(128,self.adapt)
             self.atten = AttenHead(self.adapt, num_heads)
             self.clf = nn.Linear(self.adapt, num_classes)
@@ -65,7 +66,7 @@ class FeatMatch(nn.Module): # Student
 
     def extract_feature(self, x):
         if self.backbone == 'vit':
-            x = self.fext.forward_features(x) # (batch, 197, 192)
+            x = self.fext.module.forward_features(x) # (batch, 197, 192)
             x = x[:,0,:].reshape(-1, 192) #(batch, 192)
             return x
         else:

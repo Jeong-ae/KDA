@@ -28,7 +28,7 @@ class SSLTrainer(Trainer):
         # mini-ImageNet: mean: [0.47872189, 0.44985512, 0.40134091], st: [0.27524031, 0.26572543, 0.28019405]
         Ttrain = RandomAugment(N=self.config['transform']['data_augment']['N'], # 2
                         M=self.config['transform']['data_augment']['M']) # 9
-        if self.model.backbone == 'vit':
+        if self.model.backbone == 'vit' or self.teacher.backbone == 'vit':
             Ttrain = T.Compose([Ttrain, T.Resize((224,224)), T.ToTensor()])
             Tval = T.Compose([T.Resize((224,224)), T.ToTensor()])
             Tsimple = T.Compose([T.RandomHorizontalFlip(),
@@ -45,8 +45,8 @@ class SSLTrainer(Trainer):
         if self.config['transform']['preprocess']['type'] == 'zca':
             Tnorm = data.ZCATransformer(self.config['transform']['preprocess']['config'])
         elif self.config['transform']['preprocess']['type'] == 'mean-std':
-            Tnorm = data.MeanStdTransformer(mean=[0.49139968, 0.48215841, 0.44653091],
-                                            std=[0.24703223, 0.24348513, 0.26158784])
+            Tnorm = data.MeanStdTransformer(mean=[0.50707516, 0.48654887, 0.44091784],
+                                            std=[0.26826769, 0.26104504, 0.26866837])
         else:
             raise ValueError
 
@@ -76,7 +76,7 @@ class SSLTrainer(Trainer):
 
         K, shape = self.config['transform']['data_augment']['K'], self.config['data']['shape'] # 8, 32 
         # 8번 반복 augmentation한다는거같음
-        if self.model.backbone == 'vit':
+        if self.model.backbone == 'vit' or self.teacher.backbone == 'vit':
             dtrain_lab = dset(x=xl, y=yl, Taggr=Ttrain, Tsimp=Tsimple, K=K, shape=224) #개별적으로 데이터셋 만들고
             dtrain_unlab = dset(x=xu, y=None, Taggr=Ttrain, Tsimp=Tsimple, K=K, shape=224)
             dval = dset(x=xv, y=yv, Taggr=None, Tsimp=Tval, K=None, shape=224)
