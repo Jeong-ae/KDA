@@ -135,7 +135,7 @@ class FeatMatchTrainer(ssltrainer.SSLTrainer):
         self.lp = torch.cat(lp).to(self.default_device) #(200)
 
         self.fp, self.yp, self.lp = self.retrieve_topk()
-       # print("shape", self.fp.shape)
+       # print("shape", self.fp.shape) 
 
     def retrieve_topk(self):
         labels, counts = torch.unique(self.yp, return_counts=True)

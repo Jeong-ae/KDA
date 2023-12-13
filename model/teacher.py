@@ -63,7 +63,7 @@ class TeacherNetwork(nn.Module):
 
     def forward(self, x, fp=None):
         if self.backbone == 'vit':
-            x = self.fext.forward_features(x)
+            x = self.fext.module.forward_features(x)
             x = x[:,0,:].reshape(-1, 192)
         else:
             x = self.fext(x)
