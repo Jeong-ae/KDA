@@ -1,5 +1,5 @@
-# semi-supervised Knowledge Distillation with feature Augmentation : KDA
-Implementation of "semi-supervised Knowledge Distillation with feature Augmentation : KDA"
+# KDA : semi-supervised Knowledge Distillation with feature Augmentation
+Implementation of "KDA : semi-supervised Knowledge Distillation with feature Augmentation"
 
 This repository contains strong FeatMatch baseline implementation.
 "[FeatMatch: Feature-Based Augmentation for Semi-Supervised Learning](https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123630460.pdf)[ECCV 2020]"]
