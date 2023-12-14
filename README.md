@@ -8,7 +8,7 @@ This repository contains strong FeatMatch baseline implementation.
 - Cifar10/100
 - Mini-ImageNet
 
-## Supervised Knowledge Distillation
+## Semi-Supervised Knowledge Distillation
 - response based distillation (KL Divergence loss)
 - Consistency loss
 
