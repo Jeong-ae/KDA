@@ -20,7 +20,7 @@ This repository contains strong FeatMatch baseline implementation.
 
 ## Installation
 ```
-pipinstall -r requirements.txt
+pip install -r requirements.txt
 
 ```
 
