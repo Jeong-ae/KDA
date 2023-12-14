@@ -6,3 +6,5 @@ gitpython
 ordered-set
 termcolor
 wget
+timm
+matplotlib
