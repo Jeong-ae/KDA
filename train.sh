@@ -5,3 +5,5 @@ python ./train/featmatch.py \
 --overwrite \
 --amp \
 --ckpt='teacher_weight/cifar100/vit/best_ckpt'
+--teacher=True \
+--kld=True \
