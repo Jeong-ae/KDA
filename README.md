@@ -49,37 +49,24 @@ The model is evaluated on the validation data, and the model with the best valid
 Finally, we report the test accuracy of the selected model.
 
 ### CIFAR-100
-\#labels 4k | 4k | 10k | 
---- | --- | --- 
-paper | 31.06 ± 0.41 |  26.83 ± 0.04 
-repo | 30.79 ± 0.35 | 26.88 ± 0.13
-
-### mini-ImageNet
-\#labels | 4k | 10k
---- | --- | --- 
-paper | 39.05 ± 0.06 | 34.79 ± 0.22 
-repo | 38.94 ± 0.19 | 34.84 ± 0.19
-
-### DomainNet
-_r<sub>u<sub>_ | 0% | 25% | 50% | 75%
---- | --- | --- | --- | ---
-paper | 40.66 ± 0.60 | 46.11 ± 1.15 | 54.01 ± 0.66 | 58.30 ± 0.93 
-repo | 40.47 ± 0.23 | 43.40 ± 0.25 | 52.49 ± 1.06 | 56.20 ± 1.25
-
-### SVHN
-\#labels | 250 | 1k | 4k
+\#label 4k | cnn13(S) | ResNet18(S) | ViT(S)
 --- | --- | --- | ---
-paper | 3.34 ± 0.19 | 3.10 ± 0.06 | 2.62 ± 0.08
-repo | 3.62 ± 0.12 | 3.02 ± 0.04 | 2.61 ± 0.02
+cnn13(T) 69.09 | 68.89 | 51.32 | **80.67**
+ResNet(T) 51.19 | 68.75 | 51.95 | **71.10**
+ViT(T) | 76.03 | 51.50 | | 78.45
 
 ### CIFAR-10
-\#labels | 250 | 1k | 4k
---- | --- | --- | ---
-paper | 7.50 ± 0.64 | 5.76 ± 0.07 |  4.91 ± 0.18
-repo | 7.38 ± 0.94 | 6.04 ± 0.24 | 5.19 ± 0.05
+\#label 250 | WRN(S) | ResNet18(S) | CNN13(S) | ViT(S)
+--- | --- | --- | --- | ---
+WRN(T) 91.72 | **92.20** | 73.08 | 84.80 | 86.00 
 
-## Acknowledgement
-This work was funded by DARPA’s Learning with Less Labels (LwLL) program under agreement HR0011-18-S-0044 and DARPAs Lifelong Learning Machines (L2M) program under Cooperative Agreement HR0011-18-2-0019.
+### CIFAR-10
+\#label 4k  | WRN(S) | ResNet18(S) | CNN13(S) | ViT(S)
+--- | --- | --- | --- | ---
+ResNet18(T) 69.14 | 56.42 | 68.88 | 45.36 | 80.94
+
+## T-SNE Visualization
+
 
 ## Citation
     @inproceedings{kuo2020featmatch,
