@@ -32,6 +32,7 @@ sh train.sh
 ### Running arguments
 
     -cf CONFIG: training configd on
+    --ckpt CHECKPOINT: location of teacher model checkpoint
     --teacher TEACHER: activate teacher model
     --kld KL-Divergence: add kl divergence loss
 
