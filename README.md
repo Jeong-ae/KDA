@@ -49,8 +49,7 @@ The model is evaluated on the validation data, and the model with the best valid
 Finally, we report the test accuracy of the selected model.
 
 ### CIFAR-100
-\#labels | 4k | 10k
---- | --- | --- 
+\#labels 4k | 4k | 10k | 
 paper | 31.06 ± 0.41 |  26.83 ± 0.04 
 repo | 30.79 ± 0.35 | 26.88 ± 0.13
 
