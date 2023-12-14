@@ -53,7 +53,7 @@ Finally, we report the test accuracy of the selected model.
 --- | --- | --- | ---
 cnn13(T) 69.09 | 68.89 | 51.32 | **80.67**
 ResNet(T) 51.19 | 68.75 | 51.95 | **71.10**
-ViT(T) | 76.03 | 51.50 | | 78.45
+ViT(T) 76.03 | 51.50 | ing | **78.45**
 
 ### CIFAR-10
 \#label 250 | WRN(S) | ResNet18(S) | CNN13(S) | ViT(S)
