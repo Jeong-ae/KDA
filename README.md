@@ -9,7 +9,7 @@ This repository contains strong FeatMatch baseline implementation.
 - Mini-ImageNet
 
 ## Semi-Supervised Knowledge Distillation
-- response based distillation (KL Divergence loss)
+- Response based distillation (KL Divergence loss)
 - Consistency loss
 
 ## Teacher Models and Student Models
