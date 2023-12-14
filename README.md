@@ -39,14 +39,13 @@ sh train.sh
 
 ## Results
 
-Here are the quantitative results on different datasets, with different number of labels. Numbers represent error rate in three runs (lower the better).
+Here are the quantitative results on different datasets. Numbers represent accuracy.
 
-For CIFAR-100, mini-ImageNet, CIFAR-10, and SVHN, we follow the conventional evaluation method.
+For CIFAR-100, mini-ImageNet, CIFAR-10, we follow the conventional evaluation method.
 The model is evaluated directly on the test set, and the median of the last _K_ (_K_=10 in our case) testing accuracies is reported.
 
-For our proposed DomainNet setting, we reserve 1% of validation data, which is much fewer than the 5% of labeled data.
-The model is evaluated on the validation data, and the model with the best validation accuracy is selected.
-Finally, we report the test accuracy of the selected model.
+For our proposed KD and top-K setting, we observed that selecting CNN as teacher, ViT as student achieves best accuracy.
+Also in order to show that KlD loss is effective, we conduct ablation study of "Both kd, top-K versus only top-K". 
 
 ### CIFAR-100
 \#label 4k | cnn13(S) | ResNet18(S) | ViT(S)
@@ -64,6 +63,8 @@ WRN(T) 91.72 | **92.20** | 73.08 | 84.80 | 86.00
 \#label 4k  | WRN(S) | ResNet18(S) | CNN13(S) | ViT(S)
 --- | --- | --- | --- | ---
 ResNet18(T) 69.14 | 56.42 | 68.88 | 45.36 | 80.94
+
+### Ablation Study
 
 ## T-SNE Visualization
 
