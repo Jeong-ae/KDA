@@ -1,10 +1,8 @@
-## FeatMatch: Feature-Based Augmentation for Semi-Supervised Learning
+# semi-supervised Knowledge Distillation with feature Augmentation : KDA
+Implementation of "semi-supervised Knowledge Distillation with feature Augmentation : KDA"
 
-This is the PyTorch implementation of our paper:\
-**FeatMatch: Feature-Based Augmentation for Semi-Supervised Learning**\
-**_[Chia-Wen Kuo]_**, [Chih-Yao Ma], [Jia-Bin Huang], [Zsolt Kira]\
-European Conference on Computer Vision (ECCV), 2020\
-[[arXiv]] [[Project]]
+This repository contains strong FeatMatch baseline implementation.
+"[FeatMatch: Feature-Based Augmentation for Semi-Supervised Learning](https://www.ecva.net/papers/eccv_2020/papers_ECCV/papers/123630460.pdf)[ECCV 2020]"]
 
 ## Abstract
 
