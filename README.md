@@ -45,14 +45,13 @@ For CIFAR-100, mini-ImageNet, CIFAR-10, we follow the conventional evaluation me
 The model is evaluated directly on the test set, and the median of the last _K_ (_K_=10 in our case) testing accuracies is reported.
 
 For our proposed KD and top-K setting, we observed that selecting CNN as teacher, ViT as student achieves best accuracy.
-Also in order to show that KlD loss is effective, we conduct ablation study of "Both kd, top-K versus only top-K". 
 
 ### CIFAR-100
 \#label 4k | cnn13(S) | ResNet18(S) | ViT(S)
 --- | --- | --- | ---
 cnn13(T) 69.09 | 68.89 | 51.32 | **80.67**
-ResNet(T) 51.19 | 68.75 | 51.95 | **71.10**
-ViT(T) 76.03 | 51.50 | ing | **78.45**
+ResNet(T) 51.19 | 68.75 | 51.95 | **81.62**
+ViT(T) 76.03 | 51.50 | 55.18 | **78.6**
 
 ### CIFAR-10
 \#label 250 | WRN(S) | ResNet18(S) | CNN13(S) | ViT(S)
@@ -63,11 +62,6 @@ WRN(T) 91.72 | **92.20** | 73.08 | 84.80 | 86.00
 \#label 4k  | WRN(S) | ResNet18(S) | CNN13(S) | ViT(S)
 --- | --- | --- | --- | ---
 ResNet18(T) 69.14 | 56.42 | 68.88 | 45.36 | 80.94
-
-### Ablation Study
-
-## T-SNE Visualization
-
 
 ## Citation
     @inproceedings{kuo2020featmatch,
